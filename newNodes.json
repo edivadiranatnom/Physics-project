@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    { "id": "mammifero", "group": 0, "label": "Mammiferi", "level": 1 },
+    { "id": "gane", "group": 0, "label": "Gani", "level": 2 },
+    { "id": "gaddu", "group": 0, "label": "Gaddi", "level": 2 },
+    { "id": "inseddu", "group": 1, "label": "Inseddi", "level": 1 },
+    { "id": "formiga", "group": 1, "label": "Formighe", "level": 2 },
+    { "id": "abe", "group": 1, "label": "Abi", "level": 2 }
+  ],
+  "links": [
+    { "target": "mammifero", "source": "gane", "strength": 0.7 },
+    { "target": "mammifero", "source": "gaddu", "strength": 0.7 },
+    { "target": "inseddu", "source": "formiga", "strength": 0.7 },
+    { "target": "inseddu", "source": "abe", "strength": 0.7 },
+    { "target": "gane", "source": "gaddu", "strength": 0.1 }
+  ]
+}
