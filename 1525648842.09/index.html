@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <title>
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="//d3js.org/d3.v4.min.js"></script>
+    <script src="http://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+</head>
+
+<body style="background-color: rgb(255, 117, 26)">
+    <h1 style="font-family: 'Roboto', sans-serif; text-align: center; color:white; font-size: 50px">#thoughtsduringschool</h1>
+</body>
+<script>
+    $(document).ready(function () {
+        var zeroLevelNodes = [],
+            firstLevelLinks = [];
+
+        var width = 2500,
+            height = 1800;
+
+        var svg = d3.select('body').append("svg").attr("id", "svg")
+            .attr("width", width)
+            .attr("height", height)
+
+        d3.json("predictionThirdStep.json", function (err, graph) {
+
+            var node = svg.selectAll(".node")
+                .data(zeroLevelNodes)
+                .enter().append("circle")
+                .attr("class", function (d) {
+                    return "node " + d.node;
+                })
+                .attr("r", 5)
+                .attr("fill", levelColor)
+                .attr("id", function (d) {
+                    return d.node;
+                })
+
+            var link = svg.selectAll(".link")
+                .data(firstLevelLinks)
+                .enter().append("line")
+                .attr("class", "link")
+                .style("stroke", "white")
+
+            var radius = 5;
+
+            function tick() {
+                node.attr("cx", function (d) {
+                        return d.x = Math.max(radius, Math.min(width - radius, d.x));
+                    })
+                    .attr("cy", function (d) {
+                        return d.y = Math.max(radius, Math.min(height - radius, d.y));
+                    });
+                link
+                    .attr("x1", function (d) {
+                        return d.source.x;
+                    })
+                    .attr("y1", function (d) {
+                        return d.source.y;
+                    })
+                    .attr("x2", function (d) {
+                        return d.target.x;
+                    })
+                    .attr("y2", function (d) {
+                        return d.target.y;
+                    });
+
+            }
+
+            function levelColor(d) {
+                return d.level == 0 ? "red" : "blue"
+            }
+
+            /* ZOOM SECTION */
+
+            var zoom_handler = d3.zoom()
+                .on("zoom", zoom_actions);
+
+            function zoom_actions() {
+                svg.attr("transform", d3.event.transform)
+            }
+
+            zoom_handler(svg);
+
+            /* ZOOM SECTION */
+
+
+            /* DRAG SECTION */
+
+            var drag_handler = d3.drag()
+                .on("start", drag_start)
+                .on("drag", drag_drag)
+                .on("end", drag_end);
+
+            drag_handler(node)
+
+            function drag_start(d) {
+                if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            function drag_drag(d) {
+                d.fx = d3.event.x;
+                d.fy = d3.event.y;
+            }
+
+            function drag_end(d) {
+                if (!d3.event.active) simulation.alphaTarget(0);
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            /* DRAG SECTION */
+
+            /* Assigns a random color to the new nodes */
+            function randomCol() {
+                var colors = [
+                    "purple",
+                    "blue",
+                    "red"
+                ]
+                var rand = Math.random()
+                if (rand <= 0.33) return colors[0]
+                else if (rand > 0.33 && rand <= 0.66) return colors[1]
+                else return colors[2]
+            }
+            var i = 0;
+            /* Interval function adding nodes and links */
+            d3.interval(function () {
+                var node = graph[i];
+                zeroLevelNodes.push({
+                    "node": parseInt(node.source)
+                })
+                if (node.step != 0) {
+                    firstLevelLinks.push({
+                        "source": parseInt(node.source),
+                        "target": parseInt(node.target)
+                    })
+                }
+                restart();
+                i++;
+            }, 100, d3.now() + 500);
+
+            /* Restart function that updates nodes and links arrays adding them to the network visualization */
+            function restart() {
+
+                node = node.data(zeroLevelNodes, function (d) {
+                    return d.node;
+                });
+                node.exit().remove();
+                node = node.enter().append("circle")
+                    .attr("fill", randomCol)
+                    .attr("r", 5)
+                    .merge(node)
+
+                link = link.data(firstLevelLinks)
+                link.exit().remove()
+                link = link.enter().append("line")
+                    .attr("class", "link")
+                    .style("stroke", "#ccc")
+                    .merge(link)
+
+                simulation.nodes(zeroLevelNodes)
+                simulation.force("link", d3.forceLink(firstLevelLinks).id(function (d) {
+                        return d.node;
+                    }).distance(100))
+                    .restart()
+            }
+
+
+
+            var simulation = d3.forceSimulation(zeroLevelNodes)
+                .force('charge', d3.forceManyBody().strength(-100))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('link', d3.forceLink(firstLevelLinks).id(function (d) {
+                    return d.node;
+                }))
+                .force("x", d3.forceX())
+                .force("y", d3.forceY())
+                .alphaTarget(1)
+                .on("tick", tick)
+
+            restart();
+
+        });
+    })
+</script>
+
+</html>
